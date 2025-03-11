@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+env/
+
+# 환경변수 파일
+.env
+
+# 데이터베이스 & 로그
+*.sqlite3
+logs/
+
+# Docker
+*.log
+*.pid
+*.tar
+*.sock
