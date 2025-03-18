@@ -6,7 +6,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# .env 파일 경로 지정 (강제 로드)
+dotenv_path = os.path.join(os.path.dirname(__file__), "../.env")
+load_dotenv(dotenv_path, override=True)  # 기존 환경 변수 덮어쓰기
+
 DATABASE_URL = os.getenv("DATABASE_URL")
+print("Loaded DATABASE_URL:", DATABASE_URL) 
+
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL 환경 변수가 로드되지 않았습니다!")
 
 # MySQL 연결 설정
 engine = create_engine(DATABASE_URL)
