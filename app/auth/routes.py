@@ -12,10 +12,18 @@ router = APIRouter()
 
 @router.post("/signup")
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    # 아이디 중복 확인
-    existing_user = db.query(User).filter(User.username == user.username).first()
-    if existing_user:
+    # 전화번호 포맷 정리 (하이픈과 공백 제거)
+    normalized_phone = user.phone.replace("-", "").replace(" ", "")
+
+    # 아이디 중복 확인 (대소문자 무시)
+    existing_user_by_id = db.query(User).filter(User.username.ilike(user.username)).first()
+    if existing_user_by_id:
         raise HTTPException(status_code=400, detail="이미 존재하는 아이디입니다.")
+
+    # 전화번호 중복 확인
+    existing_user_by_phone = db.query(User).filter(User.phone == normalized_phone).first()
+    if existing_user_by_phone:
+        raise HTTPException(status_code=400, detail="이미 가입한 회원입니다.")
 
     # 비밀번호 해싱
     hashed_password = services.hash_password(user.password)
@@ -24,12 +32,13 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
     new_user = User(
         username=user.username,
         name=user.name,
-        phone=user.phone,
+        phone=normalized_phone,  # 정리된 전화번호 저장
         password_hash=hashed_password,
     )
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+
     return {"message": "회원가입 성공!"}
 
 @router.post("/login")
