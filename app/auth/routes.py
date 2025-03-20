@@ -10,7 +10,7 @@ from app.auth.dependencies import get_current_user
 
 router = APIRouter()
 
-@router.post("/register")
+@router.post("/signup")
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
     # 아이디 중복 확인
     existing_user = db.query(User).filter(User.username == user.username).first()
@@ -57,15 +57,19 @@ def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
 @router.post("/refresh")
 def refresh_token(request: schemas.RefreshTokenRequest):
     try:
-        # Refresh Token을 디코딩하여 유효한지 확인
+        # Refresh Token 디코딩 및 검증
         payload = jwt.decode(request.refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
         username = payload.get("sub")
         if not username:
             raise HTTPException(status_code=401, detail="Invalid token")
 
-        # 새로운 Access Token 발급
-        new_access_token = services.create_access_token(data={"sub": username})
-        return {"access_token": new_access_token, "token_type": "bearer"}
+        # 새로운 Access Token 발급 (만료 시간 설정)
+        new_access_token = services.create_access_token(
+            data={"sub": username},
+            expires_delta=timedelta(minutes=30)  # Access Token 유효 기간 설정
+        )
+
+        return {"access_token": new_access_token}
 
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
@@ -95,11 +99,3 @@ def change_password(
 @router.post("/logout")
 def logout():
     return {"message": "로그아웃 성공!"}
-
-# 아이디 중복 확인 기능
-@router.get("/check-username/{username}")
-def check_username(username: str, db: Session = Depends(get_db)):
-    existing_user = db.query(User).filter(User.username == username).first()
-    if existing_user:
-        return {"message": "이미 존재하는 아이디입니다."}
-    return {"message": "사용 가능한 아이디입니다."}

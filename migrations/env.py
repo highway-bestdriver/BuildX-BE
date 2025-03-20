@@ -22,12 +22,13 @@ if not DATABASE_URL:
 # Alembic이 사용할 DB URL 설정
 config.set_main_option("sqlalchemy.url", DATABASE_URL)
 
-# 모델의 MetaData 추가 (여기에 모델 import 필요)
-from app.database import Base  # ✅ 모델의 Base 가져오기
-target_metadata = Base.metadata
+# ✅ 모델을 직접 import 해야 Alembic이 감지할 수 있음
+from app.database import Base  # Base 모델 가져오기
+from app.models import user  # 🚀 User 모델 직접 import
 
+target_metadata = Base.metadata  # ✅ Alembic이 Base.metadata를 인식하도록 설정
 
-def run_migrations_offline() -> None:
+def run_migrations_offline():
     """Run migrations in 'offline' mode."""
     context.configure(
         url=DATABASE_URL,
@@ -38,8 +39,7 @@ def run_migrations_offline() -> None:
     with context.begin_transaction():
         context.run_migrations()
 
-
-def run_migrations_online() -> None:
+def run_migrations_online():
     """Run migrations in 'online' mode."""
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
@@ -51,7 +51,6 @@ def run_migrations_online() -> None:
         context.configure(connection=connection, target_metadata=target_metadata)
         with context.begin_transaction():
             context.run_migrations()
-
 
 if context.is_offline_mode():
     run_migrations_offline()
