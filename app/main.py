@@ -1,8 +1,9 @@
 from fastapi import FastAPI
-from app.auth.routes import router as auth_router
 from app.database import engine, Base
 import sys
 import os
+from app.auth.routes import router as auth_router
+from app.routers import dashboard
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -11,8 +12,9 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-# 라우트 등록
+# 라우터 등록
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
+app.include_router(dashboard.router, prefix='/dashboard', tags=["Dashboard"])
 
 @app.get("/")
 def read_root():
