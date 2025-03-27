@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional
 
 class UserCreate(BaseModel):
     username: str
@@ -16,3 +17,7 @@ class ChangePasswordRequest(BaseModel):
 
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
+
+class GoogleLoginRequest(BaseModel):
+    token: str
+    phone: Optional[str] = None  # 프론트에서 함께 보내주는 경우

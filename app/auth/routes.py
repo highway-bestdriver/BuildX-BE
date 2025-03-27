@@ -1,3 +1,4 @@
+import requests
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -7,8 +8,10 @@ from datetime import timedelta
 from jose import jwt
 from app.auth.services import SECRET_KEY, ALGORITHM, JWTError
 from app.auth.dependencies import get_current_user
+from app.auth.schemas import GoogleLoginRequest
 
 router = APIRouter()
+GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
 
 @router.post("/signup")
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
@@ -108,3 +111,67 @@ def change_password(
 @router.post("/logout")
 def logout():
     return {"message": "로그아웃 성공!"}
+
+@router.post("/google-login")
+def google_login(
+    request: schemas.GoogleLoginRequest,  # 아래에 phone 추가했다고 가정
+    db: Session = Depends(get_db),
+):
+    # 1. 구글 access_token으로 유저 정보 가져오기
+    headers = {"Authorization": f"Bearer {request.token}"}
+    response = requests.get("https://www.googleapis.com/oauth2/v3/userinfo", headers=headers)
+
+    if response.status_code != 200:
+        raise HTTPException(status_code=400, detail="Google 인증 실패")
+
+    user_info = response.json()
+    email = user_info.get("email")
+    name = user_info.get("name")
+
+    if not email:
+        raise HTTPException(status_code=400, detail="이메일 정보를 가져올 수 없습니다.")
+
+    # 2. 이메일로 기존 유저 찾기
+    user = db.query(User).filter(User.username.ilike(email)).first()
+
+    # 3. 이메일로도 없으면 => 수동 연동 시도
+    if not user and request.phone:
+        # 전화번호로 유저 찾기
+        normalized_phone = request.phone.replace("-", "").replace(" ", "")
+        user = db.query(User).filter(User.phone == normalized_phone).first()
+
+        if user:
+            # 기존 유저에 구글 이메일 연동
+            user.username = email
+            user.oauth_provider = "google"
+            db.commit()
+            db.refresh(user)
+
+    # 4. 그래도 user가 없으면 새로 생성
+    if not user:
+        user = User(
+            username=email,
+            name=name,
+            phone="",  # 없으면 빈값
+            password_hash="",
+            oauth_provider="google"
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+    # 5. JWT 토큰 발급
+    access_token = services.create_access_token(
+        data={"sub": user.username},
+        expires_delta=timedelta(minutes=30),
+    )
+    refresh_token = services.create_refresh_token(
+        data={"sub": user.username},
+        expires_delta=timedelta(days=7),
+    )
+
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer"
+    }
