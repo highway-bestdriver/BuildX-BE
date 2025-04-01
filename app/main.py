@@ -3,11 +3,8 @@ from app.database import engine, Base
 import sys
 import os
 from app.auth.routes import router as auth_router
-<<<<<<< HEAD
-from app.routers import dashboard, generate
-=======
-from app.routers import dashboard, runCode
->>>>>>> 7fd8aaf8c3690ff193ded9c5b6b599af95e34e48
+from app.routers import dashboard, generate, runCode
+
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
