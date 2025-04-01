@@ -3,7 +3,7 @@ from app.database import engine, Base
 import sys
 import os
 from app.auth.routes import router as auth_router
-from app.routers import dashboard
+from app.routers import dashboard, generate
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -15,6 +15,7 @@ app = FastAPI()
 # 라우터 등록
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
 app.include_router(dashboard.router, prefix='/dashboard', tags=["Dashboard"])
+app.include_router(generate.router, prefix="/generate", tags=["Model Generation"])
 
 @app.get("/")
 def read_root():
@@ -23,3 +24,4 @@ def read_root():
 @app.get("/")
 def home():
     return {"message": "FastAPI JWT 인증 API"}
+
