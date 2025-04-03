@@ -53,9 +53,13 @@ def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
 
     # Access Token
     access_token = services.create_access_token(
-        data={"sub": db_user.username},
-        expires_delta=timedelta(minutes=30),
-    )
+    data={
+        "sub": db_user.username,
+        "id": db_user.id,
+        "name": db_user.name
+    },
+    expires_delta=timedelta(minutes=30),
+)
 
     # Refresh Token
     refresh_token = services.create_refresh_token(
@@ -162,7 +166,11 @@ def google_login(
 
     # 5. JWT 토큰 발급
     access_token = services.create_access_token(
-        data={"sub": user.username},
+        data={
+            "sub": user.username,
+            "id": user.id,
+            "name": user.name
+        },
         expires_delta=timedelta(minutes=30),
     )
     refresh_token = services.create_refresh_token(
