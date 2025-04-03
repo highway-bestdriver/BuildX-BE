@@ -88,3 +88,5 @@ def train_model(request: Request):
         "all_accuracy": all_acc,
         "all_loss": all_loss
     }
+
+# 지금 loss, accuracy는 실시간 X, 전체 학습이 끝난 뒤에 history에서 꺼내서 반환
