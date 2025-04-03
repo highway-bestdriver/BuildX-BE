@@ -1,13 +1,21 @@
+from fastapi import APIRouter, Request
 import torch
 from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
-from fastapi import APIRouter
 import requests
 
 router = APIRouter()
 
 @router.post("/train")
-def train_model():
+def train_model(request: Request):
+    access_token = request.headers.get("Authorization")  # Bearer eyJ...
+    if not access_token:
+        return {"error": "Access token이 필요합니다."}
+
+    headers = {
+        "Authorization": access_token
+    }
+
     # 1. 백엔드 내부 요청 - GPT 코드 생성 API 호출
     response = requests.get("http://localhost:8000/code/generate")  # 주소는 실제 서버 기준
     if response.status_code != 200:
@@ -16,6 +24,7 @@ def train_model():
     result = response.json()
     model_code = result["code"]
     form = result["form"]
+    model_name = result.get("model_name", "Unnamed Model")
 
     epochs = form["epochs"]
     batch_size = form["batch_size"]
@@ -83,6 +92,7 @@ def train_model():
     }
 
     return {
+        "model_name": model_name,
         "metrics": final_metrics,
         "all_accuracy": all_acc,
         "all_loss": all_loss
