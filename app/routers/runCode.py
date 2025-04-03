@@ -2,6 +2,7 @@ from fastapi import APIRouter, Request
 import tensorflow as tf
 import numpy as np
 import requests
+from sklearn.metrics import precision_score, recall_score, f1_score, roc_auc_score
 
 router = APIRouter()
 
@@ -34,40 +35,51 @@ def train_model(request: Request):
     exec_globals = {}
     try:
         exec(model_code, exec_globals)
-        model = exec_globals["model"]  # exec 내에서 반드시 model = ... 정의되어야 함
+        model = exec_globals["model"]
     except Exception as e:
         return {"error": f"모델 코드 실행 오류: {e}"}
 
-    # 3. Optimizer & Compile
+    # 3. 모델 컴파일
     model.compile(
         optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
         loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
         metrics=['accuracy']
     )
 
-    # 4. 예시 데이터셋 (1000개, 10차원 입력, 2클래스 분류)
+    # 4. 예시 데이터셋 생성
     x = np.random.randn(1000, 10).astype(np.float32)
     y = np.random.randint(0, 2, size=(1000,)).astype(np.int32)
 
-    # 5. 학습
+    # 5. 학습 수행
     history = model.fit(
         x, y,
         epochs=epochs,
         batch_size=batch_size,
-        verbose=0  # 로그 생략
+        verbose=0
     )
 
     all_acc = [round(acc * 100, 2) for acc in history.history["accuracy"]]
     all_loss = [round(loss, 4) for loss in history.history["loss"]]
 
-    # 6. 지표 반환
+    # 6. 메트릭 계산 (예측 기반)
+    y_pred_logits = model.predict(x)
+    y_pred = np.argmax(y_pred_logits, axis=1)
+
+    try:
+        precision = round(precision_score(y, y_pred) * 100, 2)
+        recall = round(recall_score(y, y_pred) * 100, 2)
+        f1 = round(f1_score(y, y_pred) * 100, 2)
+        auc = round(roc_auc_score(y, y_pred) * 100, 2)
+    except Exception as e:
+        return {"error": f"메트릭 계산 오류: {e}"}
+
     final_metrics = {
         "정확도(Accuracy)": all_acc[-1],
         "loss": all_loss[-1],
-        "f1 score": 85,  # 필요 시 실제 계산 로직 추가 가능
-        "정밀도(Precision)": 60,
-        "재현율(Recall)": 71,
-        "AUC-ROC": 71
+        "f1 score": f1,
+        "정밀도(Precision)": precision,
+        "재현율(Recall)": recall,
+        "AUC-ROC": auc
     }
 
     return {
