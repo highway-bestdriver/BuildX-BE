@@ -16,7 +16,7 @@ app = FastAPI()
 # 라우터 등록
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
 app.include_router(dashboard.router, prefix='/dashboard', tags=["Dashboard"])
-app.include_router(generate.router, prefix="/generate", tags=["Model Generation"])
+app.include_router(generate.router, prefix="/code", tags=["Model Generation"])
 app.include_router(runCode.router, prefix="/code", tags=["RunningCode"])
 
 
