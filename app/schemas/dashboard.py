@@ -4,8 +4,7 @@ from datetime import datetime
 class ModelResponse(BaseModel):
     id: int
     name: str
-    created_at: datetime
-    updated_at: datetime
+    last_modified: str  # 여기서만 써야 함
 
     class Config:
-        from_attributes = True  # SQLAlchemy 모델을 Pydantic 모델로 변환
+        from_attributes = True
