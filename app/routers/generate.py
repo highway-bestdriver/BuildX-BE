@@ -11,7 +11,7 @@ router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 # JWT 디코딩 정보
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key")
-ALGORITHM = "HS256"
+ALGORITHM = os.getenv("ALGORITHM")
 def decode_token(token: str) -> str:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -36,6 +36,6 @@ def generate_model(request: ModelRequest, token: str = Depends(oauth2_scheme)):
 
     return {
         "model_name": request.model_name,
-        "forms": request.hyperparameters,
+        "form": request.hyperparameters,
         "code": generated_code
     }

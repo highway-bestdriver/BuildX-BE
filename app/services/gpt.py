@@ -3,6 +3,7 @@ import os
 import json
 import re
 
+os.environ["OLLAMA_NUM_GPU"] = "0"  # CPU 사용하도록 설정
 openai.api_key = os.getenv("OPENAI_API_KEY")
 # test용으로 ollama tinyllama 사용
 client = openai.OpenAI(
