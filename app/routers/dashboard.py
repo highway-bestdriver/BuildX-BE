@@ -14,7 +14,15 @@ def get_models(db: Session = Depends(get_db), current_user: User = Depends(get_c
     models = db.query(Model).filter(Model.user_id == current_user.id).all()
     if not models:
         raise HTTPException(status_code=404, detail="등록된 모델이 없습니다.")
-    return models
+
+    return [
+        ModelResponse(
+            id=model.id,
+            name=model.name,
+            last_modified=model.updated_at.strftime("%Y.%m.%d")
+        )
+        for model in models
+    ]
 
 # 모델 삭제 (DELETE /dashboard/{id})
 @router.delete("/{model_id}")
