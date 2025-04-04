@@ -12,6 +12,7 @@ load_dotenv()
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
+COLAB_API_URL = os.getenv("COLAB_API_URL")
 
 router = APIRouter()
 
@@ -69,6 +70,8 @@ async def websocket_train(websocket: WebSocket):
         form = result["form"]
         model_code = result["code"]
         model_name = result.get("model_name", "Unnamed Model")
+
+        
 
         epochs = form["epochs"]
         batch_size = form["batch_size"]

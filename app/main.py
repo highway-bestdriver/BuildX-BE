@@ -3,7 +3,7 @@ from app.database import engine, Base
 import sys
 import os
 from app.auth.routes import router as auth_router
-from app.routers import dashboard, generate, runCode
+from app.routers import dashboard, generate, runCode, ws_train
 
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -18,6 +18,7 @@ app.include_router(auth_router, prefix="/auth", tags=["Auth"])
 app.include_router(dashboard.router, prefix='/dashboard', tags=["Dashboard"])
 app.include_router(generate.router, prefix="/code", tags=["Model Generation"])
 app.include_router(runCode.router, prefix="/code", tags=["RunningCode"])
+app.include_router(ws_train.router)
 
 
 @app.get("/")
