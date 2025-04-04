@@ -4,7 +4,7 @@ import sys
 import os
 from app.auth.routes import router as auth_router
 from app.routers import dashboard, generate, runCode, ws_train
-
+from fastapi.middleware.cors import CORSMiddleware
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -12,6 +12,15 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+# CORS 미들웨어 등록
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 모든 프론트 허용 (개발용)
+    allow_credentials=True,
+    allow_methods=["*"],  # 모든 메서드 허용 (POST, GET, OPTIONS 등)
+    allow_headers=["*"],  # 모든 헤더 허용
+)
 
 # 라우터 등록
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
