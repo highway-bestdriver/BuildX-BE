@@ -7,6 +7,7 @@ from jose import jwt, JWTError
 from sklearn.metrics import precision_score, recall_score, f1_score, roc_auc_score
 import os
 from dotenv import load_dotenv
+import textwrap
 
 load_dotenv()
 
@@ -51,6 +52,14 @@ async def websocket_train(websocket: WebSocket):
 
     try:
         token = websocket.query_params.get("token")
+
+        # 프론트에서 JSON 받기
+        data = await websocket.receive_json()
+        model_code = data.get("code")
+        model_code = textwrap.dedent(model_code)
+        form = data.get("form")
+        model_name = data.get("model_name", "Unnamed Model")
+
         if not token:
             await websocket.send_json({"error": "Access token이 필요합니다."})
             await websocket.close()
@@ -60,24 +69,12 @@ async def websocket_train(websocket: WebSocket):
         user_id = user_info["user_id"]
         user_name = user_info["user_name"]
 
-        response = requests.get("http://localhost:8000/code/generate", headers={"Authorization": f"Bearer {token}"})
-        if response.status_code != 200:
-            await websocket.send_json({"error": "코드 생성 실패"})
-            await websocket.close()
-            return
-
-        result = response.json()
-        form = result["form"]
-        model_code = result["code"]
-        model_name = result.get("model_name", "Unnamed Model")
-
-        
-
         epochs = form["epochs"]
         batch_size = form["batch_size"]
         learning_rate = form["learning_rate"]
 
-        exec_globals = {}
+        exec_globals = {"models": tf.keras.models,"layers": tf.keras.layers}
+
         try:
             exec(model_code, exec_globals)
             model = exec_globals["model"]
@@ -85,15 +82,14 @@ async def websocket_train(websocket: WebSocket):
             await websocket.send_json({"error": f"모델 실행 오류: {e}"})
             await websocket.close()
             return
-
         model.compile(
             optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
-            loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+            loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
             metrics=["accuracy"]
         )
 
-        x = np.random.randn(1000, 10).astype(np.float32)
-        y = np.random.randint(0, 2, size=(1000,)).astype(np.int32)
+        x = np.random.randn(1000, 28, 28, 1).astype(np.float32)  # 가짜 흑백 이미지 데이터
+        y = np.random.randint(0, 10, size=(1000,)).astype(np.int32)  # 0~9 클래스
 
         await websocket.send_json({"status": "학습 시작", "model_name": model_name})
         model.fit(
@@ -107,17 +103,15 @@ async def websocket_train(websocket: WebSocket):
         y_pred_logits = model.predict(x)
         y_pred = np.argmax(y_pred_logits, axis=1)
 
-        precision = round(precision_score(y, y_pred) * 100, 2)
-        recall = round(recall_score(y, y_pred) * 100, 2)
-        f1 = round(f1_score(y, y_pred) * 100, 2)
-        auc = round(roc_auc_score(y, y_pred) * 100, 2)
+        precision = round(precision_score(y, y_pred, average="macro") * 100, 2)
+        recall = round(recall_score(y, y_pred, average="macro") * 100, 2)
+        f1 = round(f1_score(y, y_pred, average="macro") * 100, 2)
 
         await websocket.send_json({
             "type": "final_metrics",
             "precision": precision,
             "recall": recall,
-            "f1_score": f1,
-            "auc": auc
+            "f1_score": f1
         })
 
         await websocket.send_json({"status": "학습 완료"})
