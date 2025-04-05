@@ -24,32 +24,23 @@ def generate_model_code(model_name: str, layers: list, dataset: str, preprocessi
     hyperparam_settings = json.dumps(hyperparameters, indent=2)
 
     prompt = f"""
-    너는 tensorflow 전문가야. 아래 JSON 기반 정보를 바탕으로, 즉시 실행 가능한 학습 전체 코드를 작성해줘.
+    너는 tensorflow 전문가야. 아래 JSON 정보를 기반으로,
+    학습이 아니라 **모델 정의만 포함된 코드**를 `model = ...` 형식으로 작성해줘.
 
     ---
-    모델 정보:
+    레이어 구성:
     {layer_descriptions}
     
-    데이터셋:
-    {dataset_description}
-    
-    전처리 설정:
+    전처리 정보:
     {preprocessing_options}
-    
-    하이퍼파라미터:
-    {hyperparam_settings}
-    ---
-    
+
     요구사항:
-    1. 데이터셋을 직접 로드하는 코드 포함 (예: keras.datasets.mnist 또는 사용자 경로)
-    2. 전처리 설정에 따라 이미지 크기 조정, 정규화, 증강 적용
-    3. 모델 정의 포함 (Sequential 또는 Model API)
-    4. 컴파일 및 모델 학습 (fit) 포함
-    5. 테스트셋 평가 포함
-    6. 주석 없이 **오직 코드만** 반환할 것
-    7. 함수 없이 파일 한 번에 실행되는 구조로 작성할 것 (ex. if __name__ == "__main__": 없이)
-    8. 로드한 데이터셋에서 train,val,test로 데이터를 나누어 사용할 것
-    
+    1. model = tf.keras.Sequential([...]) 또는 tf.keras.Model(...) 형태로 정의할 것
+    2. 학습, 컴파일, 데이터 로드 등은 절대 포함하지 말 것
+    3. 오직 모델 정의 코드만 반환할 것
+    4. 반드시 model이라는 변수명으로 저장할 것
+    5. import 문은 있어도 되고 없어도 되고, 실행에 지장 없게만 작성할 것
+    6. 코드 외의 설명, 주석, 따옴표 등은 포함하지 말고 **오직 코드만** 반환할 것
     """
 
     try:
