@@ -8,6 +8,7 @@ from sklearn.metrics import precision_score, recall_score, f1_score, roc_auc_sco
 import os
 from dotenv import load_dotenv
 import textwrap
+import asyncio
 
 load_dotenv()
 
@@ -36,7 +37,7 @@ class WebSocketCallback(tf.keras.callbacks.Callback):
         self.websocket = websocket
         self.epoch_count = 0
 
-    async def on_epoch_end(self, epoch, logs=None):
+    def on_epoch_end(self, epoch, logs=None):  # async 제거했으
         self.epoch_count += 1
         data = {
             "type": "epoch_log",
@@ -44,7 +45,8 @@ class WebSocketCallback(tf.keras.callbacks.Callback):
             "accuracy": round(logs["accuracy"] * 100, 2),
             "loss": round(logs["loss"], 4)
         }
-        await self.websocket.send_json(data)
+        # 이벤트 루프에서 비동기 함수 실행
+        asyncio.create_task(self.websocket.send_json(data))
 
 @router.websocket("/ws/train")
 async def websocket_train(websocket: WebSocket):
