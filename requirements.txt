@@ -1,3 +1,4 @@
+# requirements.txt (배포용)
 fastapi==0.115.11
 uvicorn==0.34.0
 SQLAlchemy==2.0.38
@@ -9,3 +10,4 @@ passlib==1.7.4
 email_validator==2.2.0
 python-multipart==0.0.20
 requests
+openai==1.70.0   # ← 반드시 추가!
