@@ -10,4 +10,5 @@ passlib==1.7.4
 email_validator==2.2.0
 python-multipart==0.0.20
 requests
-openai==1.70.0   # ← 반드시 추가!
+openai==1.70.0
+tensorflow==2.19.0
