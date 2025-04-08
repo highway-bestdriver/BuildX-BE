@@ -17,7 +17,11 @@ if not DATABASE_URL:
     raise ValueError("DATABASE_URL 환경 변수가 로드되지 않았습니다!")
 
 # MySQL 연결 설정
-engine = create_engine(DATABASE_URL)
+engine = create_engine(
+    DATABASE_URL,
+    pool_pre_ping=True,
+    pool_recycle=280    
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
