@@ -3,6 +3,8 @@ from typing import List, Optional, Dict
 
 class Layer(BaseModel):
     type: str
+    id: str  # 각 레이어 고유 ID (필수)
+    input: Optional[str] = None # 각 레이어 input 값
     filters: Optional[int] = None
     kernel_size: Optional[int] = None
     activation: Optional[str] = None

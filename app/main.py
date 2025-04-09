@@ -5,6 +5,7 @@ import os
 from app.auth.routes import router as auth_router
 from app.routers import dashboard, generate, runCode, ws_train
 from fastapi.middleware.cors import CORSMiddleware
+from app.routers import feedback
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -28,7 +29,7 @@ app.include_router(dashboard.router, prefix='/dashboard', tags=["Dashboard"])
 app.include_router(generate.router, prefix="/code", tags=["Model Generation"])
 app.include_router(runCode.router, prefix="/code", tags=["RunningCode"])
 app.include_router(ws_train.router)
-
+app.include_router(feedback.router, prefix="/code", tags=["GPT Feedback"])
 
 @app.get("/")
 def read_root():
