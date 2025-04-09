@@ -35,7 +35,7 @@ app.include_router(feedback.router, prefix="/code", tags=["GPT Feedback"])
 def read_root():
     return {"message": "Hello, FastAPI!"}
 
-@app.get("/")
-def home():
-    return {"message": "FastAPI JWT 인증 API"}
+# @app.get("/")
+# def home():
+#     return {"message": "FastAPI JWT 인증 API"}
 
