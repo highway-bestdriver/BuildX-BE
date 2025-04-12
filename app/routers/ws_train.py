@@ -9,6 +9,7 @@ import os
 from dotenv import load_dotenv
 import textwrap
 import asyncio
+from starlette.websockets import WebSocketState
 
 load_dotenv()
 
@@ -37,6 +38,13 @@ class WebSocketCallback(tf.keras.callbacks.Callback):
         self.websocket = websocket
         self.epoch_count = 0
 
+    async def safe_send_json(self, data):
+        try:
+            if self.websocket.application_state == WebSocketState.CONNECTED:
+                await self.websocket.send_json(data)
+        except Exception:
+            pass
+
     def on_epoch_end(self, epoch, logs=None):  # async 제거했으
         self.epoch_count += 1
         data = {
@@ -46,7 +54,9 @@ class WebSocketCallback(tf.keras.callbacks.Callback):
             "loss": round(logs["loss"], 4)
         }
         # 이벤트 루프에서 비동기 함수 실행
-        asyncio.create_task(self.websocket.send_json(data))
+        #asyncio.create_task(self.websocket.send_json(data))
+        asyncio.create_task(self.safe_send_json(data))
+
 
 @router.websocket("/ws/train")
 async def websocket_train(websocket: WebSocket):
@@ -59,6 +69,7 @@ async def websocket_train(websocket: WebSocket):
         data = await websocket.receive_json()
         model_code = data.get("code")
         model_code = textwrap.dedent(model_code)
+        dataset = data.get("dataset")   # 확인해야함
         form = data.get("form")
         model_name = data.get("model_name", "Unnamed Model")
 
@@ -75,39 +86,46 @@ async def websocket_train(websocket: WebSocket):
         batch_size = form["batch_size"]
         learning_rate = form["learning_rate"]
 
-        exec_globals = {"models": tf.keras.models,"layers": tf.keras.layers}
+        exec_globals = {}
 
         try:
             exec(model_code, exec_globals)
             model = exec_globals["model"]
+            x_train = exec_globals["x_train"]
+            y_train = exec_globals["y_train"]
+            x_test = exec_globals["x_test"]
+            y_test = exec_globals["y_test"]
         except Exception as e:
             await websocket.send_json({"error": f"모델 실행 오류: {e}"})
             await websocket.close()
             return
+
+        x_train = x_train[:5000]
+        y_train = y_train[:5000]
+
         model.compile(
             optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
-            loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
+            loss=tf.keras.losses.CategoricalCrossentropy(from_logits=False),
             metrics=["accuracy"]
         )
 
-        x = np.random.randn(1000, 28, 28, 1).astype(np.float32)  # 가짜 흑백 이미지 데이터
-        y = np.random.randint(0, 10, size=(1000,)).astype(np.int32)  # 0~9 클래스
-
         await websocket.send_json({"status": "학습 시작", "model_name": model_name})
         model.fit(
-            x, y,
+            x_train, y_train,
             epochs=epochs,
             batch_size=batch_size,
             callbacks=[WebSocketCallback(websocket)],
             verbose=0
         )
 
-        y_pred_logits = model.predict(x)
+        y_pred_logits = model.predict(x_test)
         y_pred = np.argmax(y_pred_logits, axis=1)
 
-        precision = round(precision_score(y, y_pred, average="macro") * 100, 2)
-        recall = round(recall_score(y, y_pred, average="macro") * 100, 2)
-        f1 = round(f1_score(y, y_pred, average="macro") * 100, 2)
+        y_test = np.argmax(y_test, axis=1)
+
+        precision = round(precision_score(y_test, y_pred, average="macro") * 100, 2)
+        recall = round(recall_score(y_test, y_pred, average="macro") * 100, 2)
+        f1 = round(f1_score(y_test, y_pred, average="macro") * 100, 2)
 
         await websocket.send_json({
             "type": "final_metrics",
@@ -116,11 +134,16 @@ async def websocket_train(websocket: WebSocket):
             "f1_score": f1
         })
 
-        await websocket.send_json({"status": "학습 완료"})
-        await websocket.close()
+        if websocket.application_state == WebSocketState.CONNECTED:
+            await websocket.send_json({"status": "학습 완료"})
 
     except WebSocketDisconnect:
         print(f"[{user_name}] WebSocket 연결 종료됨")
     except Exception as e:
-        await websocket.send_json({"error": f"서버 오류: {e}"})
+        if websocket.application_state == WebSocketState.CONNECTED:
+            await websocket.send_json({"error": f"서버 오류: {e}"})
+            await websocket.close()
+
+    # 웹소켓 닫기
+    if websocket.application_state == WebSocketState.CONNECTED:
         await websocket.close()
