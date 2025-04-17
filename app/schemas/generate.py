@@ -1,43 +1,6 @@
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Union, Literal
 
-'''
-class Layer(BaseModel):
-    type: str
-    id: str
-    input: Optional[str] = None
-
-    # Conv2D, DepthwiseConv2D
-    filters: Optional[int] = None
-    kernel_size: Optional[Union[int, List[int]]] = None
-    strides: Optional[Union[int, List[int]]] = None
-    padding: Optional[str] = None
-    activation: Optional[str] = None
-    dilation_rate: Optional[Union[int, List[int]]] = None
-    use_bias: Optional[bool] = None
-    depth_multiplier: Optional[int] = None
-
-    # Pooling
-    pooling_type: Optional[str] = None
-    pooling_size: Optional[Union[int, List[int]]] = None
-
-    # Dense
-    units: Optional[int] = None
-
-    # Dropout
-    rate: Optional[float] = None
-    seed: Optional[int] = None
-
-    # BatchNorm
-    axis: Optional[int] = None
-    momentum: Optional[float] = None
-    epsilon: Optional[float] = None
-
-    # Upsampling, Concatenate, Add
-    size: Optional[List[int]] = None
-    residual_connection: Optional[bool] = None
-    '''
-
 class BaseLayer(BaseModel):
     type: str
     id: str
