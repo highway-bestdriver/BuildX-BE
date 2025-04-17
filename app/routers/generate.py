@@ -4,7 +4,7 @@ from jose import jwt, JWTError
 from pydantic import BaseModel
 from typing import List, Optional, Dict
 from app.services.gpt import generate_model_code
-from app.schemas.generate import Layer, Preprocessing, HyperParameters, ModelRequest
+from app.schemas.generate import LayerUnion, Preprocessing, HyperParameters, ModelRequest
 import os
 
 router = APIRouter()
