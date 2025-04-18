@@ -1,14 +1,17 @@
 version: '3.8'
 
 services:
-  app:
+  fastapi_app:
     build: .
     container_name: fastapi_app
     ports:
       - "8000:8000"
+    depends_on:
+      - redis
     env_file:
       - .env
-    mem_limit: 2g
+    volumes:
+      - .:/app
 
   nginx:
     image: nginx:latest
@@ -29,3 +32,20 @@ services:
     volumes:
       - ./nginx/certbot/conf:/etc/letsencrypt
       - ./nginx/certbot/www:/var/www/certbot
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  celery_worker:
+    build: .
+    container_name: celery_worker
+    command: celery -A app.celery_worker.celery_app worker --loglevel=info -Q training
+    depends_on:
+      - redis
+    env_file:
+      - .env
+    volumes:
+      - .:/app
