@@ -14,4 +14,5 @@ openai==1.70.0
 tensorflow==2.19.0
 scikit-learn==1.6.1
 celery[redis]
+uvicorn[standard]
 redis
