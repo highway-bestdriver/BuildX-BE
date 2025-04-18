@@ -125,9 +125,9 @@ async def websocket_train(websocket: WebSocket):
 
         y_test = np.argmax(y_test, axis=1)
 
-        #precision = round(precision_score(y_test, y_pred, average="macro") * 100, 2)
-        #recall = round(recall_score(y_test, y_pred, average="macro") * 100, 2)
-        #f1 = round(f1_score(y_test, y_pred, average="macro") * 100, 2)
+        precision = round(precision_score(y_test, y_pred, average="macro") * 100, 2)
+        recall = round(recall_score(y_test, y_pred, average="macro") * 100, 2)
+        f1 = round(f1_score(y_test, y_pred, average="macro") * 100, 2)
 
         loss, accuracy = model.evaluate(x_test, tf.keras.utils.to_categorical(y_test), verbose=0)
         loss = round(loss, 4)
@@ -136,10 +136,10 @@ async def websocket_train(websocket: WebSocket):
         await websocket.send_json({
             "type": "final_metrics",
             "accuracy": accuracy,
-            "loss": loss
-            #"precision": precision,
-            #"recall": recall,
-            #"f1_score": f1
+            "loss": loss,
+            "precision": precision,
+            "recall": recall,
+            "f1_score": f1
         })
 
         if websocket.application_state == WebSocketState.CONNECTED:
