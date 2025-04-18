@@ -1,7 +1,6 @@
 # app/celery_worker.py
 from celery import Celery
 import os
-import app.task.train
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379/0")
 

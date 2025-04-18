@@ -42,8 +42,7 @@ services:
   celery_worker:
     build: .
     container_name: celery_worker
-    command: celery -A app.celery_worker.celery_app worker --loglevel=info -Q training
-    depends_on:
+    command: celery -A app.task.train worker --loglevel=info -Q training
       - redis
     env_file:
       - .env
