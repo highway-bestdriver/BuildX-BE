@@ -1,12 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from app.schemas.feedback import FeedbackRequest
 from app.services.gpt import generate_model_feedback
+from app.auth.dependencies import oauth2_scheme_no_client
 import os
 
 router = APIRouter()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 # JWT 디코딩 설정
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key")
@@ -23,7 +22,7 @@ def decode_token(token: str) -> str:
         raise HTTPException(status_code=401, detail="Invalid token")
 
 @router.post("/feedback")
-def feedback_from_gpt(request: FeedbackRequest, token: str = Depends(oauth2_scheme)):
+def feedback_from_gpt(request: FeedbackRequest, token: str = Depends(oauth2_scheme_no_client)):
     username = decode_token(token)
     feedback = generate_model_feedback(
         model=request.model.dict(),

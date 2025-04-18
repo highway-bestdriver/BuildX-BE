@@ -5,12 +5,8 @@ from app.auth.services import SECRET_KEY, ALGORITHM
 from app.database import get_db
 from sqlalchemy.orm import Session
 from app.models.user import User
-from fastapi.security import OAuth2PasswordBearer
 from fastapi.security import OAuth2
 from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel, OAuthFlowPassword
-
-# OAuth2PasswordBearer: JWT 토큰을 가져오기 위한 FastAPI 내장 기능
-# oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 class OAuth2PasswordBearerNoClient(OAuth2):
     def __init__(self, tokenUrl: str):
