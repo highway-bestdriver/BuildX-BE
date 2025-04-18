@@ -116,13 +116,16 @@ async def websocket_train(websocket: WebSocket):
         )
 
         await websocket.send_json({"status": "학습 시작", "model_name": model_name})
-        model.fit(
+        try : 
+            model.fit(
             x_train, y_train,
             epochs=epochs,
             batch_size=batch_size,
             callbacks=[WebSocketCallback(websocket)],
             verbose=0
         )
+        except Exception as e:
+            await websocket.send_json({"error": f"학습 중 오류 발생: {str(e)}"})
 
         y_pred_logits = model.predict(x_test)
         y_pred = np.argmax(y_pred_logits, axis=1)
