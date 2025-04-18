@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.openapi.utils import get_openapi
 from app.database import engine, Base
 import sys
 import os
@@ -13,6 +14,36 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+# OpenAPI 문서 커스터마이징 함수 추가
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title="BuildX API",
+        version="1.0.0",
+        description="API for BuildX",
+        routes=app.routes,
+    )
+
+    # client_id, client_secret 없는 인증 방식만 명시적으로 정의
+    openapi_schema["components"]["securitySchemes"] = {
+        "OAuth2PasswordBearer": {
+            "type": "oauth2",
+            "flows": {
+                "password": {
+                    "tokenUrl": "/auth/login",
+                    "scopes": {}
+                }
+            }
+        }
+    }
+
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+# 커스터마이징 적용
+app.openapi = custom_openapi
 
 origins = [
     "http://localhost:3000",
@@ -39,8 +70,3 @@ app.include_router(feedback.router, prefix="/code", tags=["GPT Feedback"])
 @app.get("/")
 def read_root():
     return {"message": "Hello, FastAPI!"}
-
-# @app.get("/")
-# def home():
-#     return {"message": "FastAPI JWT 인증 API"}
-
