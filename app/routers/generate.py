@@ -6,6 +6,7 @@ from typing import List, Optional, Dict
 from app.services.gpt import generate_model_code
 from app.schemas.generate import Layer, Preprocessing, HyperParameters, ModelRequest
 import os
+from app.auth.dependencies import oauth2_scheme_no_client
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
@@ -23,7 +24,7 @@ def decode_token(token: str) -> str:
         raise HTTPException(status_code=401, detail="Invalid token")
 
 @router.post("/generate")
-def generate_model(request: ModelRequest, token: str = Depends(oauth2_scheme)):
+def generate_model(request: ModelRequest, token: str = Depends(oauth2_scheme_no_client)):
     user_name = decode_token(token)
     # GPT에게 코드 생성 요청
     generated_code = generate_model_code(

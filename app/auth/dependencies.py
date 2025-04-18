@@ -6,6 +6,8 @@ from app.database import get_db
 from sqlalchemy.orm import Session
 from app.models.user import User
 from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import OAuth2
+from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel, OAuthFlowPassword
 
 # OAuth2PasswordBearer: JWT 토큰을 가져오기 위한 FastAPI 내장 기능
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
@@ -25,3 +27,10 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         raise HTTPException(status_code=401, detail="사용자를 찾을 수 없습니다.")
 
     return user
+
+class OAuth2PasswordBearerNoClient(OAuth2):
+    def __init__(self, tokenUrl: str):
+        flows = OAuthFlowsModel(password=OAuthFlowPassword(tokenUrl=tokenUrl))
+        super().__init__(flows=flows)
+
+oauth2_scheme_no_client = OAuth2PasswordBearerNoClient(tokenUrl="auth/login")

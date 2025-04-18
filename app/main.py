@@ -22,7 +22,7 @@ origins = [
 # CORS 미들웨어 등록
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # 모든 프론트 허용
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],  # 모든 메서드 허용 (POST, GET, OPTIONS 등)
     allow_headers=["*"],  # 모든 헤더 허용
