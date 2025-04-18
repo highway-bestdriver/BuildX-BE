@@ -12,6 +12,7 @@ load_dotenv(dotenv_path, override=True)  # 기존 환경 변수 덮어쓰기
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 print("Loaded DATABASE_URL:", DATABASE_URL) 
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL 환경 변수가 로드되지 않았습니다!")
