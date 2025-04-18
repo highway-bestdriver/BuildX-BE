@@ -13,3 +13,6 @@ celery_app = Celery(
 celery_app.conf.task_routes = {
     "app.task.train.run_training": {"queue": "training"},
 }
+
+# 반드시 이 import가 있어야 task 등록
+import app.task.train
