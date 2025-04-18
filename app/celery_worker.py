@@ -11,7 +11,7 @@ celery_app = Celery(
 )
 
 celery_app.conf.task_routes = {
-    "task.train.run_training": {"queue": "training"},
+    "app.task.train.run_training": {"queue": "training"},
 }
 
 import app.task.train 
