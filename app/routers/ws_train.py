@@ -105,6 +105,10 @@ async def websocket_train(websocket: WebSocket):
         x_train = x_train[:100]
         y_train = y_train[:100]
 
+        # 테스트 시간 단축용 (test set)
+        x_test = x_test[:100]
+        y_test = y_test[:100]
+
         model.compile(
             optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
             loss=tf.keras.losses.CategoricalCrossentropy(from_logits=False),
