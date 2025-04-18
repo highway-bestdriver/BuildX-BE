@@ -20,9 +20,11 @@ def verify_token(token: str):
 @router.websocket("/ws/train")
 async def websocket_train(websocket: WebSocket):
     await websocket.accept()
+    print("WebSocket 연결 수락 완료")
 
     try:
         token = websocket.query_params.get("token")
+        print(f"토큰 확인: {token}")
         if not token:
             await websocket.send_json({"error": "Access token이 필요합니다."})
             await websocket.close()
@@ -30,8 +32,11 @@ async def websocket_train(websocket: WebSocket):
 
         user_info = verify_token(token)
         user_id = str(user_info["user_id"])
+        print(f"인증된 유저: {user_id}")
 
         data = await websocket.receive_json()
+        print(f"학습 요청 수신 완료! {data}")
+
         model_code = data["code"]
         form = data["form"]
 
@@ -43,16 +48,21 @@ async def websocket_train(websocket: WebSocket):
             form["batch_size"],
             form["learning_rate"]
         )
+        print("Celery 태스크 실행!")
 
         pubsub = subscribe_log(f"user:{user_id}")
+        print(f"Redis 구독 시작: user:{user_id}")
 
         while True:
             message = pubsub.get_message(ignore_subscribe_messages=True, timeout=1)
             if message:
+                print(f"Redis 메시지 수신: {message}")
                 await websocket.send_text(message["data"].decode("utf-8"))
             await asyncio.sleep(0.5)
 
     except Exception as e:
+        print(f"WebSocket 오류: {e}")
         await websocket.send_json({"error": str(e)})
     finally:
         await websocket.close()
+        print("WebSocket 종료")
