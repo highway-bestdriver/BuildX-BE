@@ -1,4 +1,4 @@
-# app/tasks/train.py
+# app/task/train.py
 from app.celery_worker import celery_app
 from app.utils.pubsub import publish_log
 import tensorflow as tf
@@ -7,6 +7,7 @@ from sklearn.metrics import precision_score, recall_score, f1_score
 
 @celery_app.task
 def run_training(user_id, model_code, epochs, batch_size, learning_rate):
+    print("✅ run_training task 들어옴!")
     print(f"🔥 학습 시작: user={user_id}")
 
     exec_globals = {}
