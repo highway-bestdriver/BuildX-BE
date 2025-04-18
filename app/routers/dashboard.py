@@ -4,7 +4,7 @@ from typing import List
 from app.database import get_db
 from app.models.user import User, Model
 from app.auth.dependencies import get_current_user
-from app.schemas.dashboard import ModelResponse
+from app.schemas.dashboard import ModelResponse, ModelDetailRecord, ModelDetailResponse
 
 router = APIRouter()
 
@@ -34,3 +34,29 @@ def delete_model(model_id: str, db: Session = Depends(get_db), current_user: Use
     db.delete(model)
     db.commit()
     return {"message": "모델이 삭제되었습니다."}
+
+@router.get("/{model_id}", response_model=ModelDetailResponse)
+def get_model_detail(model_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    model = db.query(Model).filter(Model.id == model_id, Model.user_id == current_user.id).first()
+    if not model:
+        raise HTTPException(status_code=404, detail="해당 모델을 찾을 수 없습니다.")
+
+    detail_records = db.query(ModelDetail).filter(ModelDetail.model_id == model.id).order_by(ModelDetail.created_at.desc()).all()
+
+    return ModelDetailResponse(
+        id=model.id,
+        name=model.name,
+        date=model.updated_at.strftime("%Y.%m.%d"),
+        details=[
+            ModelDetailRecord(
+                id=record.id,
+                epoch=record.epoch,
+                batch_size=record.batch_size,
+                learning_rate=record.learning_rate,
+                loss=record.loss,
+                accuracy=record.accuracy,
+                date=record.created_at.strftime("%Y.%m.%d")
+            )
+            for record in detail_records
+        ]
+    )

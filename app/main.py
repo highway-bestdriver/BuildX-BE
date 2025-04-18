@@ -26,7 +26,6 @@ def custom_openapi():
         routes=app.routes,
     )
 
-    # client_id, client_secret 없는 인증 방식만 명시적으로 정의
     openapi_schema["components"]["securitySchemes"] = {
         "OAuth2PasswordBearer": {
             "type": "oauth2",
