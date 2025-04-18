@@ -150,7 +150,7 @@ async def websocket_train(websocket: WebSocket):
             await websocket.send_json({"status": "학습 완료"})
 
     except WebSocketDisconnect:
-        print(f"[{user_name}] WebSocket 연결 종료됨")
+        print(f"WebSocket 연결 종료됨")
     except Exception as e:
         if websocket.application_state == WebSocketState.CONNECTED:
             await websocket.send_json({"error": f"서버 오류: {e}"})
