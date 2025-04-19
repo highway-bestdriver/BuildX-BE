@@ -29,5 +29,6 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
           script: |
             cd ~/buildlab
-            docker-compose down
+            docker-compose down --volumes --remove-orphans
+            docker system prune -af --volumes
             docker-compose up -d --build
