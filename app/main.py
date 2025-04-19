@@ -46,6 +46,7 @@ app.openapi = custom_openapi
 
 origins = [
     "http://localhost:3000",
+    "https://buildx-one.vercel.app",
 ]
 
 
