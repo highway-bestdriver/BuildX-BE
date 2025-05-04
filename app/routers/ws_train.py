@@ -1,15 +1,17 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from app.services.gpt import generate_model_code
 from app.utils.pubsub import subscribe_log
 from app.task.train import run_training
 from jose import jwt, JWTError
 import os
-import json
 import asyncio
+import json
 
 router = APIRouter()
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM")
+SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key")
+ALGORITHM = os.getenv("ALGORITHM", "HS256")  # 기본값 추가
 
+# JWT 검증 함수
 def verify_token(token: str):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -20,11 +22,10 @@ def verify_token(token: str):
 @router.websocket("/ws/train")
 async def websocket_train(websocket: WebSocket):
     await websocket.accept()
-    print("WebSocket 연결 수락 완료")
+    print("WebSocket 연결 완료")
 
     try:
         token = websocket.query_params.get("token")
-        print(f"토큰 확인: {token}")
         if not token:
             await websocket.send_json({"error": "Access token이 필요합니다."})
             await websocket.close()
@@ -32,37 +33,57 @@ async def websocket_train(websocket: WebSocket):
 
         user_info = verify_token(token)
         user_id = str(user_info["user_id"])
-        print(f"인증된 유저: {user_id}")
+        print(f"인증된 유저 ID: {user_id}")
 
+        # WebSocket으로 데이터 수신
         data = await websocket.receive_json()
-        print(f"학습 요청 수신 완료! {data}")
+        print(f"학습 요청 수신: {data}")
 
-        model_code = data["code"]
-        form = data["form"]
+        # 직접 코드가 들어온 경우 (테스트용 PyTorch 등)
+        if "code" in data:
+            model_code = data["code"]
+            form = data["form"]
+            use_cloud = data.get("use_cloud", False)
 
-        # Celery task 시작
+        # GPT를 통해 코드 생성하는 경우
+        else:
+            model_code = generate_model_code(
+                model_name=data["model_name"],
+                layers=data["layers"],
+                dataset=data["dataset"],
+                preprocessing=data.get("preprocessing", {}),
+                hyperparameters=data["hyperparameters"]
+            )
+            form = data["hyperparameters"]
+            use_cloud = data.get("use_cloud", False)
+
+        # Celery 태스크 실행
         run_training.delay(
             user_id,
             model_code,
             form["epochs"],
             form["batch_size"],
-            form["learning_rate"]
+            form["learning_rate"],
+            use_cloud
         )
-        print("Celery 태스크 실행!")
+        print("Celery 학습 태스크 실행됨")
 
+        # Redis 로그 구독
         pubsub = subscribe_log(f"user:{user_id}")
-        print(f"Redis 구독 시작: user:{user_id}")
+        print(f"Redis 채널 구독: user:{user_id}")
 
         while True:
             message = pubsub.get_message(ignore_subscribe_messages=True, timeout=1)
             if message:
-                print(f"Redis 메시지 수신: {message}")
-                await websocket.send_text(message["data"].decode("utf-8"))
+                decoded = message["data"].decode("utf-8")
+                await websocket.send_text(decoded)
+                print(f"로그 전송: {decoded}")
             await asyncio.sleep(0.5)
 
     except Exception as e:
         print(f"WebSocket 오류: {e}")
         await websocket.send_json({"error": str(e)})
+
     finally:
         await websocket.close()
         print("WebSocket 종료")
