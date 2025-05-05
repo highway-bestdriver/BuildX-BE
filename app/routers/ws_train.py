@@ -69,8 +69,14 @@ async def websocket_train(websocket: WebSocket):
         print("Celery 학습 태스크 실행됨")
 
         # Redis 로그 구독
-        pubsub = subscribe_log(f"user:{user_id}")
-        print(f"Redis 채널 구독: user:{user_id}")
+        try:
+            pubsub = subscribe_log(f"user:{user_id}")
+            print(f"Redis 채널 구독: user:{user_id}")
+        except Exception as e:
+            print(f"Redis 구독 중 오류 발생: {e}")
+        await websocket.send_json({"error": f"Redis 연결 실패: {str(e)}"})
+        await websocket.close()
+        return
 
         while True:
             message = pubsub.get_message(ignore_subscribe_messages=True, timeout=1)
