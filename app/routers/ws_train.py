@@ -1,17 +1,16 @@
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from app.celery_worker import celery_app
+from fastapi import APIRouter, WebSocket
 from app.services.gpt import generate_model_code
 from app.utils.pubsub import subscribe_log
 from app.task.train import run_training
 from jose import jwt, JWTError
-import os
-import asyncio
-import json
+import os, asyncio, json, builtins
 
 router = APIRouter()
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key")
-ALGORITHM = os.getenv("ALGORITHM", "HS256")  # 기본값 추가
+ALGORITHM  = os.getenv("ALGORITHM", "HS256")
 
-# JWT 검증 함수
+
 def verify_token(token: str):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -19,77 +18,84 @@ def verify_token(token: str):
     except JWTError:
         raise ValueError("유효하지 않은 토큰입니다.")
 
+
 @router.websocket("/ws/train")
 async def websocket_train(websocket: WebSocket):
     await websocket.accept()
-    print("WebSocket 연결 완료")
+    builtins.print("WebSocket 연결 완료")
 
     try:
+        # 인증
         token = websocket.query_params.get("token")
         if not token:
             await websocket.send_json({"error": "Access token이 필요합니다."})
-            await websocket.close()
             return
 
         user_info = verify_token(token)
-        user_id = str(user_info["user_id"])
-        print(f"인증된 유저 ID: {user_id}")
+        user_id   = str(user_info["user_id"])
+        builtins.print(f"인증된 유저 ID: {user_id}")
 
-        # WebSocket으로 데이터 수신
+        # 학습 요청 수신
         data = await websocket.receive_json()
-        print(f"학습 요청 수신: {data}")
+        builtins.print(f"학습 요청 수신: {data}")
 
-        # 직접 코드가 들어온 경우 (테스트용 PyTorch 등)
-        if "code" in data:
+        if "code" in data:# 직접 코드 전송
             model_code = data["code"]
-            form = data["form"]
-            use_cloud = data.get("use_cloud", False)
-
-        # GPT를 통해 코드 생성하는 경우
-        else:
+            form       = data["form"]
+            use_cloud  = data.get("use_cloud", False)
+        else: # GPT 코드 생성
             model_code = generate_model_code(
-                model_name=data["model_name"],
-                layers=data["layers"],
-                dataset=data["dataset"],
-                preprocessing=data.get("preprocessing", {}),
-                hyperparameters=data["hyperparameters"]
+                model_name    = data["model_name"],
+                layers        = data["layers"],
+                dataset       = data["dataset"],
+                preprocessing = data.get("preprocessing", {}),
+                hyperparameters = data["hyperparameters"],
             )
-            form = data["hyperparameters"]
+            form      = data["hyperparameters"]
             use_cloud = data.get("use_cloud", False)
 
-        # Celery 태스크 실행
-        run_training.delay(
-            user_id,
-            model_code,
-            form["epochs"],
-            form["batch_size"],
-            form["learning_rate"],
-            use_cloud
-        )
-        print("Celery 학습 태스크 실행됨")
+        # Celery 태스크 발행
+        try:
+            res = run_training.delay(
+                user_id,
+                model_code,
+                form["epochs"],
+                form["batch_size"],
+                form["learning_rate"],
+                use_cloud,
+            )
+            builtins.print(f"[WS] Celery task queued, id = {res.id}")
+        except Exception as exc:
+            builtins.print(f"[WS] Celery publish ERROR → {exc}")
+            await websocket.send_json({"error": f"Celery publish 실패: {exc}"})
+            return
 
-        # Redis 로그 구독
+        # Redis 구독 설정
         try:
             pubsub = subscribe_log(f"user:{user_id}")
-            print(f"Redis 채널 구독: user:{user_id}")
-        except Exception as e:
-            print(f"Redis 구독 중 오류 발생: {e}")
-        await websocket.send_json({"error": f"Redis 연결 실패: {str(e)}"})
-        await websocket.close()
-        return
+            builtins.print(f"Redis 채널 구독: user:{user_id}")
+        except Exception as exc:
+            builtins.print(f"Redis 구독 중 오류: {exc}")
+            await websocket.send_json({"error": f"Redis 연결 실패: {exc}"})
+            return
 
+        # 실시간 로그 스트리밍
         while True:
-            message = pubsub.get_message(ignore_subscribe_messages=True, timeout=1)
-            if message:
-                decoded = message["data"].decode("utf-8")
+            msg = pubsub.get_message(ignore_subscribe_messages=True, timeout=1)
+            if msg:
+                decoded = msg["data"].decode("utf-8")
                 await websocket.send_text(decoded)
-                print(f"로그 전송: {decoded}")
+                builtins.print(f"로그 전송: {decoded}")
             await asyncio.sleep(0.5)
 
-    except Exception as e:
-        print(f"WebSocket 오류: {e}")
-        await websocket.send_json({"error": str(e)})
+    except Exception as exc:
+        builtins.print(f"[WS] 처리 중 오류: {exc}")
+        # 소켓이 이미 닫혔을 수 있으므로 send 시도는 감싸둬야된대여
+        try:
+            await websocket.send_json({"error": str(exc)})
+        except RuntimeError:
+            pass
 
     finally:
         await websocket.close()
-        print("WebSocket 종료")
+        builtins.print("WebSocket 종료")
