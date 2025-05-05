@@ -3,6 +3,10 @@ from fastapi.openapi.utils import get_openapi
 from app.database import engine, Base
 import sys
 import os
+
+from dotenv import load_dotenv
+load_dotenv()
+
 from app.auth.routes import router as auth_router
 from app.routers import dashboard, generate, ws_train
 from fastapi.middleware.cors import CORSMiddleware
