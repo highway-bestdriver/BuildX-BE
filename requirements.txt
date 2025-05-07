@@ -11,9 +11,10 @@ email_validator==2.2.0
 python-multipart==0.0.20
 requests
 openai==1.70.0
-tensorflow==2.19.0
 scikit-learn==1.6.1
 celery[redis]
 uvicorn[standard]
 redis
 websockets
+torch==2.1.0
+torchvision==0.16.0
