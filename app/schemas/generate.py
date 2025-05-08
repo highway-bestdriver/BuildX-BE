@@ -240,7 +240,8 @@ class HyperParameters(BaseModel):
     epochs: Optional[int] = 10
     batch_size: Optional[int] = 32
     learning_rate: Optional[float] = 0.001
-    device_type: Optional[str] = None
+    #device_type: Optional[str] = None
+    use_cloud: Optional[bool] = False
 
 class ModelRequest(BaseModel):
     model_name: str
