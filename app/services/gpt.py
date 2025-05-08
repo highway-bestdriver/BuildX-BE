@@ -38,8 +38,8 @@ def generate_model_code(model_name: str, layers: list, dataset: str, preprocessi
 
     2. 데이터 전처리
     - `preprocessing`은 torchvision.transforms.v2 기반의 전처리 리스트임
-    - `SequentialTransform`은 Compose처럼 동작함
-    - 최종적으로 transforms = v2.Sequential([...]) 형태로 생성해야 함
+    - transforms는 v2.Sequential([...]) 형식으로 구성해야 하며, Compose와 유사하게 동작함
+    - `SequentialTransform`이라는 이름의 클래스는 사용하지 마세요. 존재하지 않습니다.
     
     3. 데이터셋 및 로딩
     - `dataset` 필드는 어떤 데이터셋을 사용할지 나타냄. CIFAR10 또는 MNIST 등 torchvision.datasets 에서 불러와야 함
