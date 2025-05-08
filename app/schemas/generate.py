@@ -3,7 +3,7 @@ from typing import List, Optional, Dict, Union, Literal
 
 class BaseLayer(BaseModel):
     type: str
-    name: str
+    id: str
     input: Optional[Union[str, List[str]]] = None
 
 class InputLayer(BaseLayer):
