@@ -3,117 +3,134 @@ from typing import List, Optional, Dict, Union, Literal
 
 class BaseLayer(BaseModel):
     type: str
-    id: str
-    input: Optional[str] = None
+    name: str
+    inputs: Optional[Union[str, List[str]]] = None
 
 class InputLayer(BaseLayer):
     type: Literal["Input"]
-    shape: List[int]
+    shape: Optional[List[int]] = None
 
-# Conv2D
-class Conv2DLayer(BaseLayer):
-    type: Literal["Conv2D"]
-    filters: int
+class Conv2dLayer(BaseLayer):
+    type: Literal["Conv2d"]
+    in_channels: int
+    out_channels: int
     kernel_size: Union[int, List[int]]
-    strides: Optional[Union[int, List[int]]] = [1, 1]
-    padding: Optional[Literal["valid", "same"]] = "same"
-    activation: Optional[str] = None
-    dilation_rate: Optional[Union[int, List[int]]] = None
-    use_bias: Optional[bool] = True
+    stride: Union[int, List[int]] = 1
+    padding: Union[int, str] = 0
+    dilation: Union[int, List[int]] = 1
+    groups: int = 1
+    bias: bool = True
 
-# DepthwiseConv2D
-class DepthwiseConv2DLayer(BaseLayer):
-    type: Literal["DepthwiseConv2D"]
+class MaxPool2dLayer(BaseLayer):
+    type: Literal["MaxPool2d"]
     kernel_size: Union[int, List[int]]
-    depth_multiplier: Optional[int] = 1
-    activation: Optional[str] = None
-    padding: Optional[str] = "same"
+    stride: Optional[Union[int, List[int]]] = None
+    padding: Union[int, List[int]] = 0
+    dilation: Union[int, List[int]] = 1
+    return_indices: bool = False
+    ceil_mode: bool = False
 
-# Pooling
-class PoolingLayer(BaseLayer):
-    type: Literal["Pooling"]
-    pooling_type: Literal["max", "avg"]
-    pooling_size: Union[int, List[int]]
-    strides: Optional[Union[int, List[int]]] = [2, 2]
-    padding: Optional[Literal["valid", "same"]] = "same"
+class AvgPool2dLayer(BaseLayer):
+    type: Literal["AvgPool2d"]
+    kernel_size: Union[int, List[int]]
+    stride: Optional[Union[int, List[int]]] = None
+    padding: Union[int, List[int]] = 0
+    ceil_mode: bool = False
+    count_include_pad: bool = True
+    divisor_override: Optional[int] = None
 
-# Dense
-class DenseLayer(BaseLayer):
-    type: Literal["Dense"]
-    units: int
-    activation: Optional[str] = None
-    use_bias: Optional[bool] = True
+class AdaptiveAvgPool2dLayer(BaseLayer):
+    type: Literal["AdaptiveAvgPool2d"]
+    output_size: Union[int, List[int]]
 
-# Dropout
+class AdaptiveMaxPool2dLayer(BaseLayer):
+    type: Literal["AdaptiveMaxPool2d"]
+    output_size: Union[int, List[int]]
+
+class LinearLayer(BaseLayer):
+    type: Literal["Linear"]
+    in_features: int
+    out_features: int
+    bias: bool = True
+
 class DropoutLayer(BaseLayer):
     type: Literal["Dropout"]
-    rate: float
-    seed: Optional[int] = None
+    p: float = 0.5
+    inplace: bool = False
 
-# BatchNormalization
-class BatchNormLayer(BaseLayer):
-    type: Literal["BatchNorm"]
-    axis: Optional[int] = -1
-    momentum: Optional[float] = 0.99
-    epsilon: Optional[float] = 0.001
+class BatchNorm2dLayer(BaseLayer):
+    type: Literal["BatchNorm2d"]
+    num_features: int
+    eps: float = 1e-5
+    momentum: float = 0.1
+    affine: bool = True
+    track_running_stats: bool = True
 
-# Flatten
 class FlattenLayer(BaseLayer):
     type: Literal["Flatten"]
+    start_dim: int = 1
+    end_dim: int = -1
 
-# Upsampling
-class UpsamplingLayer(BaseLayer):
-    type: Literal["Upsampling"]
-    size: List[int]
+class UpsampleLayer(BaseLayer):
+    type: Literal["Upsample"]
+    scale_factor: Union[float, List[float]]
+    mode: Literal["nearest", "linear", "bilinear", "bicubic", "trilinear", "area"]
+    align_corners: Optional[bool] = None
 
-# Concatenate
-class ConcatenateLayer(BaseLayer):
-    type: Literal["Concatenate"]
-    axis: Optional[int] = -1
+class ConvTranspose2dLayer(BaseLayer):
+    type: Literal["ConvTranspose2d"]
+    in_channels: int
+    out_channels: int
+    kernel_size: Union[int, List[int]]
+    stride: Union[int, List[int]] = 1
+    padding: Union[int, List[int]] = 0
+    output_padding: Union[int, List[int]] = 0
+    groups: int = 1
+    bias: bool = True
+    dilation: Union[int, List[int]] = 1
 
-# Add
-class AddLayer(BaseLayer):
-    type: Literal["Add"]
-    id: str
-    input: List[str]  # 2개 이상의 입력 받기
-    residual_connection: Optional[bool] = False  # 필요 시 skip connection 표시용
+class SequentialLayer(BaseLayer):
+    type: Literal["Sequential"]
+    layers: List[str]  # 하위 layer의 name/id 리스트
 
-# ReLU
+class IdentityLayer(BaseLayer):
+    type: Literal["Identity"]
+
 class ReLULayer(BaseLayer):
     type: Literal["ReLU"]
+    inplace: bool = True
 
-# LeakyReLU
 class LeakyReLULayer(BaseLayer):
     type: Literal["LeakyReLU"]
-    alpha: Optional[float] = 0.3  # 기본값은 Keras 디폴트
+    negative_slope: float = 0.01
+    inplace: bool = True
 
-# Sigmoid
 class SigmoidLayer(BaseLayer):
     type: Literal["Sigmoid"]
 
-# Tanh
 class TanhLayer(BaseLayer):
     type: Literal["Tanh"]
 
-# Softmax
 class SoftmaxLayer(BaseLayer):
     type: Literal["Softmax"]
-    axis: Optional[int] = -1  # Keras 기본값
+    dim: int = 1
 
-
-
+# === 통합 LayerUnion ===
 LayerUnion = Union[
     InputLayer,
-    Conv2DLayer,
-    DepthwiseConv2DLayer,
-    PoolingLayer,
-    DenseLayer,
+    Conv2dLayer,
+    MaxPool2dLayer,
+    AvgPool2dLayer,
+    AdaptiveAvgPool2dLayer,
+    AdaptiveMaxPool2dLayer,
+    LinearLayer,
     DropoutLayer,
-    BatchNormLayer,
+    BatchNorm2dLayer,
     FlattenLayer,
-    UpsamplingLayer,
-    ConcatenateLayer,
-    AddLayer,
+    UpsampleLayer,
+    ConvTranspose2dLayer,
+    SequentialLayer,
+    IdentityLayer,
     ReLULayer,
     LeakyReLULayer,
     SigmoidLayer,
@@ -121,42 +138,103 @@ LayerUnion = Union[
     SoftmaxLayer
 ]
 
-# 전처리
-class Resize(BaseModel):
-    height: int
-    width: int
+# === 공통 Base ===
+class BaseTransform(BaseModel):
+    type: str
 
-class RandomCrop(BaseModel):
-    height: int
-    width: int
-    seed: Optional[int] = None
 
-class RandomContrast(BaseModel):
-    factor: float  # [0,1]
-    seed: Optional[int] = None
+# === Resize ===
+class ResizeTransform(BaseTransform):
+    type: Literal["Resize"]
+    size: Optional[Union[int, List[int]]]
+    interpolation: Optional[Union[int, str]] = "bilinear"
+    max_size: Optional[int] = None
+    antialias: Optional[bool] = True
 
-class RandomFlip(BaseModel):
-    mode: Literal["horizontal", "vertical", "horizontal_and_vertical"]
-    seed: Optional[int] = None
+# === CenterCrop ===
+class CenterCropTransform(BaseTransform):
+    type: Literal["CenterCrop"]
+    size: Union[int, List[int]]
 
-class RandomRotation(BaseModel):
-    factor: float  # [0,1]
-    seed: Optional[int] = None
+# === RandomCrop ===
+class RandomCropTransform(BaseTransform):
+    type: Literal["RandomCrop"]
+    size: Union[int, List[int]]
+    padding: Optional[Union[int, List[int]]] = None
+    pad_if_needed: bool = False
+    fill: Union[
+        int,
+        float,
+        List[int],
+        List[float],
+        None,
+        Dict[Union[type, str], Optional[Union[int, float, List[int], List[float]]]]
+    ] = 0
+    padding_mode: Literal["constant", "edge", "reflect", "symmetric"] = "constant"
 
-class RandomTranslation(BaseModel):
-    height_factor: float  # [0,1]
-    width_factor: float   # [0,1]
-    seed: Optional[int] = None
+# === RandomHorizontalFlip ===
+class RandomHorizontalFlipTransform(BaseTransform):
+    type: Literal["RandomHorizontalFlip"]
+    p: float = 0.5
 
-class Preprocessing(BaseModel):
-    resize: Optional[Resize] = None
-    normalize: Optional[bool] = None
-    augmentation: Optional[bool] = False
-    random_crop: Optional[RandomCrop] = None
-    random_contrast: Optional[RandomContrast] = None
-    random_flip: Optional[RandomFlip] = None
-    random_rotation: Optional[RandomRotation] = None
-    random_translation: Optional[RandomTranslation] = None
+# === RandomVerticalFlip ===
+class RandomVerticalFlipTransform(BaseTransform):
+    type: Literal["RandomVerticalFlip"]
+    p: float = 0.5
+
+# === RandomRotation ===
+class RandomRotationTransform(BaseTransform):
+    type: Literal["RandomRotation"]
+    degrees: Union[float, List[float]]
+    interpolation: Optional[Union[int, str]] = "nearest"
+    expand: bool = False
+    center: Optional[List[float]] = None
+    fill: Union[
+        int,
+        float,
+        List[int],
+        List[float],
+        None,
+        Dict[Union[type, str], Optional[Union[int, float, List[int], List[float]]]]
+    ] = 0
+
+# === ColorJitter ===
+class ColorJitterTransform(BaseTransform):
+    type: Literal["ColorJitter"]
+    brightness: Optional[Union[float, List[float]]] = None
+    contrast: Optional[Union[float, List[float]]] = None
+    saturation: Optional[Union[float, List[float]]] = None
+    hue: Optional[Union[float, List[float]]] = None
+
+# === Normalize ===
+class NormalizeTransform(BaseTransform):
+    type: Literal["Normalize"]
+    mean: List[float]
+    std: List[float]
+    inplace: bool = False
+
+# === ToTensor ===
+class ToTensorTransform(BaseTransform):
+    type: Literal["ToTensor"]
+
+# === Sequential (Compose 역할) ===
+class SequentialTransform(BaseTransform):
+    type: Literal["Sequential"]
+    transforms: List[BaseTransform]
+
+# === 통합 TransformUnion ===
+TransformUnion = Union[
+    ResizeTransform,
+    CenterCropTransform,
+    RandomCropTransform,
+    RandomHorizontalFlipTransform,
+    RandomVerticalFlipTransform,
+    RandomRotationTransform,
+    ColorJitterTransform,
+    NormalizeTransform,
+    ToTensorTransform,
+    SequentialTransform
+]
 
 class HyperParameters(BaseModel):
     epochs: Optional[int] = 10
@@ -168,7 +246,7 @@ class ModelRequest(BaseModel):
     model_name: str
     layers: List[LayerUnion]
     dataset: str
-    preprocessing: Optional[Preprocessing] = None
+    preprocessing: List[TransformUnion] = None
     hyperparameters: Optional[HyperParameters] = None
 
 class CodeGenResponse(BaseModel):

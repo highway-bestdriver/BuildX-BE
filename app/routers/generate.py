@@ -4,7 +4,7 @@ from jose import jwt, JWTError
 from pydantic import BaseModel
 from typing import List, Optional, Dict
 from app.services.gpt import generate_model_code
-from app.schemas.generate import LayerUnion, Preprocessing, HyperParameters, ModelRequest
+from app.schemas.generate import LayerUnion, TransformUnion, HyperParameters, ModelRequest
 import os
 
 router = APIRouter()
@@ -30,7 +30,7 @@ def generate_model(request: ModelRequest, token: str = Depends(oauth2_scheme)):
         model_name=request.model_name,
         layers=[layer.dict() for layer in request.layers],
         dataset=request.dataset,
-        preprocessing=request.preprocessing.dict() if request.preprocessing else {},
+        preprocessing=[preprocessing.dict() for preprocessing in request.preprocessing],
         hyperparameters=request.hyperparameters.dict() if request.hyperparameters else {},
     )
 
