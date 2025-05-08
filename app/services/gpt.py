@@ -109,36 +109,42 @@ def generate_model_code(model_name: str, layers: list, dataset: str, preprocessi
         return f"# GPT 호출 실패: {str(e)}"
 
 
-def generate_model_feedback(model: dict, accuracy: float, loss: float) -> str:
+def generate_model_feedback(model: dict, metrics: dict) -> str:
     print(model.get("dateset"))
     prompt = f"""
-    너는 딥러닝 전문가야. 아래는 사용자가 설계한 CNN 모델 구조와 그 학습 결과를 정리 해놓은 거야.
-    사용자는 딥러닝 초보이고, 모델 구조를 블록 형태로 쌓아 딥러닝 모델을 제작했어.
-    이러한 초보자 맞춤 모델 개선 피드백을 부탁해.
+    너는 딥러닝 전문가야. 아래는 한 초보자가 블록 기반 UI로 설계한 CNN 모델과 학습 결과야.
+    사용자가 설계한 모델 구조, 전처리, 하이퍼파라미터, 성능 지표를 바탕으로 구조 개선 및 성능 향상에 대한 피드백을 제공해줘.
+    목적: 초보자가 이해할 수 있도록 핵심 위주로 간단하고 직관적인 설명을 해줄 것.
 
     1. 모델 이름: {model.get("model_name")}
 
     2. 학습에 사용한 데이터셋: {model.get("dataset")}
 
     3. 모델 구조:
-    {json.dumps(model.get("layers", []), indent=2)}
+    {json.dumps(model.get("layers", []), indent=2, ensure_ascii=False)}
 
     4. 전처리 설정:
-    {json.dumps(model.get("preprocessing", {}), indent=2)}
+    {json.dumps(model.get("preprocessing", {}), indent=2, ensure_ascii=False)}
 
     5. 하이퍼파라미터:
-    {json.dumps(model.get("hyperparameters", {}), indent=2)}
+    {json.dumps(model.get("hyperparameters", {}), indent=2, ensure_ascii=False)}
 
-    6. 학습 성능:
-    - Accuracy: {accuracy}
-    - Loss: {loss}
+    6. 학습 및 테스트 성능 요약:
+    - 학습 에포크: {metrics.get("epoch")}
+    - 학습 정확도 (train_acc): {metrics.get("train_acc")}
+    - 학습 손실값 (train_loss): {metrics.get("train_loss")}
+    - 테스트 정확도 (test_acc): {metrics.get("test_acc")}
+    - 테스트 정밀도 (test_precision): {metrics.get("test_precision")}
+    - 테스트 재현율 (test_recall): {metrics.get("test_recall")}
+    - 테스트 F1 점수 (test_f1): {metrics.get("test_f1")}
 
-    위 정보를 기반으로 모델의 성능을 분석해줘. 그리고,
-    1. 구조 개선 팁 2~3가지 (과적합, 성능 향상 등)
-    2. 하이퍼파라미터 추천
-    3. 필요한 경우 추가할 수 있는 레이어
-    4. 이 성능이 나온 원인 분석
-    이런 내용을 한국어로 핵심만 간결하고 딥러닝 초보자가 이해하기 쉽게 알려줘.
+    아래 내용을 중심으로 한국어 피드백 작성:
+    1. 모델 구조 개선 팁 2~3가지 (예: 과적합 완화, 성능 향상 등)
+    2. 하이퍼파라미터 조정 추천 (예: 학습률, 배치 크기, 에포크 수)
+    3. 필요한 경우 추가하면 좋은 레이어 (예: Dropout, BatchNorm 등)
+    4. 성능 결과에 기반한 원인 분석 (예: underfitting, 과적합, 모델 과단순 등)
+    
+    결과는 초보자가 이해할 수 있도록 간결하고 핵심만 알려줘.
     """
 
     try:
