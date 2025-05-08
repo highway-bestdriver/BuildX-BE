@@ -51,6 +51,7 @@ async def websocket_train(websocket: WebSocket):
                 preprocessing = data.get("preprocessing", {}),
                 hyperparameters = data["hyperparameters"],
             )
+
             form      = data["hyperparameters"]
             use_cloud = data.get("use_cloud", False)
 
