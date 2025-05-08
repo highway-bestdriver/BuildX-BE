@@ -38,4 +38,5 @@ def generate_model(request: ModelRequest, token: str = Depends(oauth2_scheme)):
         "model_name": request.model_name,
         "form": request.hyperparameters,
         "code": generated_code,
+        "use_cloud": request.hyperparameters.use_cloud if request.hyperparameters else False
     }
