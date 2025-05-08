@@ -76,6 +76,8 @@ def generate_model_code(model_name: str, layers: list, dataset: str, preprocessi
     - CUDA 사용이 가능한 경우에는 `device = torch.device("cuda" if torch.cuda.is_available() else "cpu")` 방식으로 모델과 입력을 이동
     - `model.to(device)` 및 `inputs.to(device)` 적용 필요
     
+    주의: 사용자가 입력한 레이어 파라미터 값은 그대로 사용할 것. 잘못된 값이더라도 수정하거나 추측하지 말고, JSON의 값을 그대로 코드로 반영할 것.
+    
     <모델 이름>
     {model_name}
 
