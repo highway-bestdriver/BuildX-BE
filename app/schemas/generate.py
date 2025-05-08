@@ -4,7 +4,7 @@ from typing import List, Optional, Dict, Union, Literal
 class BaseLayer(BaseModel):
     type: str
     name: str
-    inputs: Optional[Union[str, List[str]]] = None
+    input: Optional[Union[str, List[str]]] = None
 
 class InputLayer(BaseLayer):
     type: Literal["Input"]
