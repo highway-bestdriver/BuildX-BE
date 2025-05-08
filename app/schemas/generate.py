@@ -147,7 +147,7 @@ class BaseTransform(BaseModel):
 class ResizeTransform(BaseTransform):
     type: Literal["Resize"]
     size: Optional[Union[int, List[int]]]
-    interpolation: Optional[Union[int, str]] = "bilinear"
+    interpolation: Optional[Union[int, str]] = "InterpolationMode.BILINEAR"
     max_size: Optional[int] = None
     antialias: Optional[bool] = True
 
@@ -170,7 +170,7 @@ class RandomCropTransform(BaseTransform):
         None,
         Dict[Union[type, str], Optional[Union[int, float, List[int], List[float]]]]
     ] = 0
-    padding_mode: Literal["constant", "edge", "reflect", "symmetric"] = "constant"
+    padding_mode: Literal["constant", "edge", "reflect", "symmetric"]
 
 # === RandomHorizontalFlip ===
 class RandomHorizontalFlipTransform(BaseTransform):
@@ -186,7 +186,7 @@ class RandomVerticalFlipTransform(BaseTransform):
 class RandomRotationTransform(BaseTransform):
     type: Literal["RandomRotation"]
     degrees: Union[float, List[float]]
-    interpolation: Optional[Union[int, str]] = "nearest"
+    interpolation: Optional[Union[int, str]] = "InterpolationMode.NEAREST"
     expand: bool = False
     center: Optional[List[float]] = None
     fill: Union[

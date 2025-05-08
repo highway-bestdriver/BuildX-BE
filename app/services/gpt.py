@@ -33,12 +33,12 @@ def generate_model_code(model_name: str, layers: list, dataset: str, preprocessi
     - `layers`: 필드는 사용자가 만든 모델 구조로, 각 항목은 하나의 레이어를 의미함.
     - `type`: 레이어 타입 (예: "Conv2d", "ReLU", "BatchNorm2d", ...)
     - `name`: 레이어 변수 이름 (예: self.conv1 에서 conv1)
-    - `inputs`: 이 레이어가 어떤 이전 레이어의 출력을 입력으로 받는지를 나타냄 → 이걸 따라 forward() 내에서 연결해야 함
+    - `input`: 이 레이어가 어떤 이전 레이어의 출력을 입력으로 받는지를 나타냄 → 이걸 따라 forward() 내에서 연결해야 함
     - 그 외의 필드는 해당 레이어의 파라미터로, 반드시 torch.nn.{{type}} 생성자에 전달해야 함.
 
     2. 데이터 전처리
     - `preprocessing`은 torchvision.transforms.v2 기반의 전처리 리스트임
-    - transforms는 v2.Sequential([...]) 형식으로 구성해야 하며, Compose와 유사하게 동작함
+    - torchvision.transforms.v2 as transform를 사용하여 transforms.Compose([...]) 형식으로 구성하세요.
     - `SequentialTransform`이라는 이름의 클래스는 사용하지 마세요. 존재하지 않습니다.
     
     3. 데이터셋 및 로딩
