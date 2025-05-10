@@ -27,7 +27,7 @@ def feedback_from_gpt(request: FeedbackRequest, token: str = Depends(oauth2_sche
     username = decode_token(token)
     feedback = generate_model_feedback(
         model=request.model.dict(),
-        metrics=request.metrics
+        metrics=request.metrics.dict()
     )
     return {
         "username": username,
