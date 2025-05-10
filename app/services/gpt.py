@@ -64,6 +64,7 @@ def generate_model_code(model_name: str, layers: list, dataset: str, preprocessi
         "train_acc": ...,     # 마지막 epoch 기준
         "train_loss": ...,
         "test_acc": ...,
+        "test_loss": ...,
         "test_precision": ...,
         "test_recall": ...,
         "test_f1": ...
@@ -136,6 +137,7 @@ def generate_model_feedback(model: dict, metrics: dict) -> str:
     - 학습 정확도 (train_acc): {metrics.get("train_acc")}
     - 학습 손실값 (train_loss): {metrics.get("train_loss")}
     - 테스트 정확도 (test_acc): {metrics.get("test_acc")}
+    - 테스트 정확도 (test_loss): {metrics.get("test_loss")}
     - 테스트 정밀도 (test_precision): {metrics.get("test_precision")}
     - 테스트 재현율 (test_recall): {metrics.get("test_recall")}
     - 테스트 F1 점수 (test_f1): {metrics.get("test_f1")}
