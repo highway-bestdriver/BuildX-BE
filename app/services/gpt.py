@@ -54,7 +54,7 @@ def generate_model_code(model_name: str, layers: list, dataset: str, preprocessi
     
     5. 테스트 평가 및 최종 출력
     학습 종료 후 `x_test` 또는 `test_loader`를 통해 `y_pred`를 구하고 `y_test`와 비교하여 다음 성능 지표를 계산:
-    - test_acc, test_precision, test_recall, test_f1
+    - test_acc, test_loss, test_precision, test_recall, test_f1
     - 마지막에 다음 딕셔너리를 `print(json.dumps(...))` 형식으로 출력:
 
     ```python
