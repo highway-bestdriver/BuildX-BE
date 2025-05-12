@@ -79,6 +79,30 @@ def generate_model_code(model_name: str, layers: list, dataset: str, preprocessi
     
     주의: 사용자가 입력한 레이어 파라미터 값은 그대로 사용할 것. 잘못된 값이더라도 수정하거나 추측하지 말고, JSON의 값을 그대로 코드로 반영할 것.
     
+    [중요1] 모든 하이퍼파라미터(예: epochs, batch_size, learning_rate)는 코드 상단에 변수로 명확히 정의해야 하며, 아래 형식으로 작성하세요:
+        EPOCHS = 10  
+        BATCH_SIZE = 32  
+        LEARNING_RATE = 0.001  
+    
+        그리고 이 변수들은 이후 학습 코드 전반에 걸쳐 그대로 사용되어야 하며, 숫자를 직접 하드코딩하지 마세요.
+        예를 들어 for epoch in range(EPOCHS), batch_size=BATCH_SIZE, lr=LEARNING_RATE 형식처럼 반드시 변수명으로만 사용하세요.
+        절대 금지: for epoch in range(3), lr=0.0001, batch_size=64 와 같이 숫자 직접 기입
+        
+    [중요2] forward 함수 내에서는 F.relu(x), F.softmax(x) 등의 함수형 연산을 사용하지 마세요.
+        모든 연산은 반드시 self.xxx = nn.~~~ 형태로 모델 정의부에 선언하고, forward에서는 self.xxx(x)로 호출하세요.
+        예)
+        올바른 방식:
+            self.relu = nn.ReLU()
+            ...
+            def forward(self, x):
+                x = self.relu(x)
+        
+        금지된 방식:
+            import torch.nn.functional as F
+            ...
+            def forward(self, x):
+                x = F.relu(x)  ← 금지
+    
     <모델 이름>
     {model_name}
 
