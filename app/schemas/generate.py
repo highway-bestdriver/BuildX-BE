@@ -254,3 +254,4 @@ class CodeGenResponse(BaseModel):
     user_id: int
     code: str
     form: HyperParameters
+    error: Optional[Dict] = None

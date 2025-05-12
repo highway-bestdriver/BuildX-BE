@@ -6,6 +6,7 @@ from typing import List, Optional, Dict
 from app.services.gpt import generate_model_code
 from app.schemas.generate import LayerUnion, TransformUnion, HyperParameters, ModelRequest
 import os
+from app.services.validator import validate_code
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
@@ -34,9 +35,18 @@ def generate_model(request: ModelRequest, token: str = Depends(oauth2_scheme)):
         hyperparameters=request.hyperparameters.dict() if request.hyperparameters else {},
     )
 
-    return {
+    #코드 유효성 검증
+    validation_result = validate_code(request, generated_code)
+
+    response = {
         "model_name": request.model_name,
         "form": request.hyperparameters,
         "code": generated_code,
-        "use_cloud": request.hyperparameters.use_cloud if request.hyperparameters else False
+        "use_cloud": request.hyperparameters.use_cloud if request.hyperparameters else False,
+        "error": validation_result["valid"]
     }
+
+    if not validation_result["valid"]:
+        response["error"] = validation_result
+
+    return response
