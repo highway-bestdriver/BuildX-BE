@@ -18,5 +18,5 @@ print("REDIS_URL (from env):", REDIS_URL)  # 다시 한 번 출력해보려구 .
 celery_app.conf.task_routes = {
     "app.task.train.run_training": {"queue": "training"},
 }
-
-import app.task.train
+#celery_app.autodiscover_tasks(["app.task"])
+#import app.task.train
