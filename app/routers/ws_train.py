@@ -5,6 +5,7 @@ from app.utils.pubsub import subscribe_log
 from app.task.train import run_training
 from jose import jwt, JWTError
 import os, asyncio, json, builtins
+from app.services.gpt import analyze_error
 
 router = APIRouter()
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key")
@@ -84,9 +85,24 @@ async def websocket_train(websocket: WebSocket):
         while True:
             msg = pubsub.get_message(ignore_subscribe_messages=True, timeout=1)
             if msg:
+                builtins.print(f"Redis 메시지 수신됨: {msg}")
                 decoded = msg["data"].decode("utf-8")
                 await websocket.send_text(decoded)
                 builtins.print(f"로그 전송: {decoded}")
+                try:
+                    data = json.loads(decoded)
+                    if data.get("type") == "error":
+                        gpt_result = await analyze_error(
+                            data.get("message", ""),
+                            data.get("traceback", "")
+                        )
+                        await websocket.send_json({
+                            "type": "error_analysis",
+                            "original_error": data.get("message", ""),
+                            "summary": gpt_result
+                        })
+                except Exception:
+                    pass  # JSON이 아니거나 분석 실패 시 무시
             await asyncio.sleep(0.5)
 
     except Exception as exc:

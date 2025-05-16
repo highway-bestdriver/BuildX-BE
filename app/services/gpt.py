@@ -189,3 +189,31 @@ def generate_model_feedback(model: dict, metrics: dict) -> str:
     except Exception as e:
         return f"# GPT 피드백 생성 실패: {str(e)}"
 
+async def analyze_error(message: str, traceback: str) -> str:
+    prompt = f"""다음은 PyTorch 코드 실행 중 발생한 에러입니다.
+
+        [에러 메시지]
+        {message}
+        
+        [전체 traceback]
+        {traceback}
+        
+        에러 발생 원인과 수정 방법을 사용자가 이해하기 쉽고 간략히 정리해주세요. 
+        수정 방법은 구체적으로 어느 곳을 어떻게 고치면 되는지 확실하게 설명해주세요.
+        EX) 특정 레이어의 채널 값이 안맞다면 해당 레이어의 이름을 정확히 짚어서 설명해주세요. 
+        이처럼 아주 구체적으로 AI 초보자가 오류를 쉽게 수정할 수 있도록 해주세요.  
+"""
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": "너는 PyTorch 에러 디버깅 도우미야."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.2
+        )
+        raw_output = response.choices[0].message.content.strip()
+        return extract_code_only(raw_output)
+
+    except Exception as e:
+        return f"# GPT 호출 실패: {str(e)}"
