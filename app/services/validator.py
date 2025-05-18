@@ -9,7 +9,7 @@ def parse_forward_connections(code: str):
     print("[DEBUG] 코드 내 forward() 레이어 실행 순서:", found)
     return found
 
-def trace_json_connections(layers, start_id="input"):
+def trace_json_connections(layers, start_id="x"):
     #ModelRequest 기반으로 연결된 순서대로 레이어 ID 추적. DFS를 통해 input → output 흐름 추적
     connections = []
     visited = set()
@@ -77,7 +77,7 @@ def validate_code(model_request: ModelRequest, generated_code: str):
     print("\n=========== 모델 코드 검증 시작 ===========\n")
     # 1. 실행 순서 검증
     json_layers = model_request.layers
-    expected_flow = trace_json_connections(json_layers, start_id="input")
+    expected_flow = trace_json_connections(json_layers, start_id="x")
     code_flow = parse_forward_connections(generated_code)
 
     # 2. 하이퍼파라미터 검증
