@@ -2,6 +2,7 @@
 from celery import Celery
 import os
 from dotenv import load_dotenv
+import app.task.train
 load_dotenv()
 
 print("REDIS_URL:", os.getenv("REDIS_URL"))  # 확인용
@@ -19,4 +20,3 @@ celery_app.conf.task_routes = {
     "app.task.train.run_training": {"queue": "training"},
 }
 #celery_app.autodiscover_tasks(["app.task"])
-#import app.task.train
