@@ -43,7 +43,6 @@ async def websocket_train(websocket: WebSocket):
         if "code" in data:# 직접 코드 전송
             model_code = data["code"]
             form       = data["form"]
-            model_id   = data["model_id"]
             use_cloud  = data.get("use_cloud", False)
         else: # GPT 코드 생성
             model_code = generate_model_code(
@@ -55,14 +54,12 @@ async def websocket_train(websocket: WebSocket):
             )
 
             form      = data["hyperparameters"]
-            model_id  = data["model_id"]
             use_cloud = data.get("use_cloud", False)
 
         # Celery 태스크 발행
         try:
             res = run_training.delay(
                 user_id,
-                model_id,
                 model_code,
                 form["epochs"],
                 form["batch_size"],
